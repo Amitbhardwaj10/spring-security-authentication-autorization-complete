@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Secret properties files
+src/main/resources/application.yaml
