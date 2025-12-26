@@ -1,16 +1,19 @@
 package com.amit.security.service;
 
 import com.amit.security.entity.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Service
 public class JwtService {
@@ -39,10 +42,24 @@ public class JwtService {
     }
 
     public String extractUserName(String token) {
-        return "";
+        return extractAllClaims(token).getSubject();
     }
 
-    public boolean isTokenValid(String jwt, String username) {
-        return true;
+    private Claims extractAllClaims(String token) {
+        return Jwts
+                .parser()
+                .verifyWith(generateKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    private boolean isTokenExpired(String token) {
+        return extractAllClaims(token).getExpiration().before(new Date());
+    }
+
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUserName(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 }
