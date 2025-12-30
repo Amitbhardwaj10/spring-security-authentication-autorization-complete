@@ -28,12 +28,9 @@ public class webSecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    private final TokenBlocklistService tokenBlocklistService;
-
-    public webSecurityConfig(UserDetailsService userDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter, TokenBlocklistService tokenBlocklistService) {
+    public webSecurityConfig(UserDetailsService userDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.tokenBlocklistService = tokenBlocklistService;
     }
 
     @Bean

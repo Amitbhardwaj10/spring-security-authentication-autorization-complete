@@ -1,7 +1,6 @@
 package com.amit.security.config;
 
 import com.amit.security.service.JwtService;
-import com.amit.security.service.TokenBlocklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,12 +22,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
 
     private final UserDetailsService userDetailsService;
-    private final TokenBlocklistService tokenBlocklistService;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService, TokenBlocklistService tokenBlocklistService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
-        this.tokenBlocklistService = tokenBlocklistService;
     }
 
     @Override
@@ -40,12 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         final String jwt = authHeader.substring(7);
-
-        if (tokenBlocklistService.isTokenBlocklisted(jwt)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         final String username = jwtService.extractUserName(jwt);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
