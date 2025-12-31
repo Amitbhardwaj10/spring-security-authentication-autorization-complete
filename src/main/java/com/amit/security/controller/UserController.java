@@ -1,27 +1,24 @@
 package com.amit.security.controller;
 
+import com.amit.security.dto.request.LoginRequest;
+import com.amit.security.dto.response.LoginResponse;
 import com.amit.security.entity.User;
 import com.amit.security.repository.UserRepository;
-import com.amit.security.service.TokenBlocklistService;
 import com.amit.security.service.UserService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/api/v1/auth")
 public class UserController {
-
-    private final UserRepository userRepository;
 
     private final UserService userService;
 
-    private final TokenBlocklistService tokenBlocklistService;
-
-    public UserController(UserRepository userRepository, UserService userService, TokenBlocklistService tokenBlocklistService) {
-        this.userRepository = userRepository;
+    public UserController(UserRepository userRepository, UserService userService) {
         this.userService = userService;
-        this.tokenBlocklistService = tokenBlocklistService;
     }
 
     @PostMapping("/register")
@@ -30,16 +27,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody User user) {
-       return userService.verify(user);
-    }
-
-    @PostMapping("/logout")
-    public String logout(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader != null && authHeader.toLowerCase().startsWith("bearer ")) {
-            String jwt = authHeader.substring(7);
-            tokenBlocklistService.blocklistToken(jwt);
-        }
-        return "Logged out successfully";
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        return userService.verify(loginRequest);
     }
 }
