@@ -14,6 +14,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.net.HttpCookie;
+
 @Service
 public class UserService {
 
@@ -46,37 +48,26 @@ public class UserService {
         return savedUser;
     }
 
-    public ResponseEntity<?> verify(LoginRequest loginRequest) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getUsername(),
-                            loginRequest.getPassword()
-                    )
-            );
+    public LoginResponse verify(LoginRequest loginRequest) {
 
-            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                )
+        );
 
-            User user = userDetails.getUser();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userDetails.getUser();
 
-            String accessToken = jwtService.generateAccessToken(user);
-            String refreshToken = jwtService.generateRefreshToken(user);
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
 
-            refreshTokenService.saveToken(refreshToken, user);
+        refreshTokenService.saveToken(refreshToken, user);
 
-            LoginResponse response = LoginResponse.builder()
-                    .access_token(accessToken)
-                    .refresh_token(refreshToken)
-                    .build();
-
-            return ResponseEntity.ok(response);
-
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Invalid username or password");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
-        }
+        return LoginResponse.builder()
+                .access_token(accessToken)
+                .refresh_token(refreshToken)
+                .build();
     }
 }
