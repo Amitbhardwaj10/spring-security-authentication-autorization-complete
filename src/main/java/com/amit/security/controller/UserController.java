@@ -5,14 +5,11 @@ import com.amit.security.dto.response.LoginResponse;
 import com.amit.security.entity.User;
 import com.amit.security.repository.RefreshTokenRepository;
 import com.amit.security.repository.UserRepository;
-import com.amit.security.service.JwtService;
 import com.amit.security.service.RefreshTokenService;
 import com.amit.security.service.UserService;
 import org.springframework.http.*;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.Duration;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -42,7 +39,7 @@ public class UserController {
                     .secure(true)
                     .path("/api/v1/auth")
                     .sameSite("Strict")
-                    .maxAge(30 * 24 * 60 * 60)
+                    .maxAge(29 * 24 * 60 * 60)
                     .build();
 
             return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(
@@ -58,8 +55,11 @@ public class UserController {
         }
     }
 
-//    @PostMapping("/refresh")
-//    public ResponseEntity<String> generateAccessTokenViaRefreshToken(@CookieValue) {
-//
-//    }
+    @PostMapping("/refresh")
+    public ResponseEntity<?> generateAccessTokenViaRefreshToken(@CookieValue(value = "refresh_token", required = false) String refreshTokenFromCookie) {
+            if (refreshTokenFromCookie.isBlank()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("missing refresh token!");
+
+            String accessToken = refreshTokenService.generateAccessTokenFromRefreshToken(refreshTokenFromCookie);
+            return ResponseEntity.ok(LoginResponse.builder().access_token(accessToken).build());
+    }
 }
