@@ -35,26 +35,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader == null || !authHeader.toLowerCase().startsWith("bearer ")) {
             filterChain.doFilter(request, response);
             return;
-        } else {
-            final String jwt = authHeader.substring(7);
-            final String username = jwtService.extractUserName(jwt);
-
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-            if (username != null && authentication == null) {
-                //Authenticate
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-                if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-
-                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                }
-            }
-
-            filterChain.doFilter(request, response);
         }
+        final String jwt = authHeader.substring(7);
+        final String username = jwtService.extractUserName(jwt);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (username != null && authentication == null) {
+            //Authenticate
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            if (jwtService.isTokenValid(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            }
+        }
+
+        filterChain.doFilter(request, response);
     }
 }
