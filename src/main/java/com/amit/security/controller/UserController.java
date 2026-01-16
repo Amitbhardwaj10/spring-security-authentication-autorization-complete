@@ -7,9 +7,13 @@ import com.amit.security.repository.RefreshTokenRepository;
 import com.amit.security.repository.UserRepository;
 import com.amit.security.service.RefreshTokenService;
 import com.amit.security.service.UserService;
+import com.amit.security.service.UserServiceImpl;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.*;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -19,7 +23,7 @@ public class UserController {
 
     private final RefreshTokenService refreshTokenService;
 
-    public UserController(UserRepository userRepository, UserService userService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository) {
+    public UserController(UserRepository userRepository, UserServiceImpl userService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository) {
         this.userService = userService;
         this.refreshTokenService = refreshTokenService;
     }
@@ -57,9 +61,22 @@ public class UserController {
 
     @PostMapping("/refresh")
     public ResponseEntity<?> generateAccessTokenViaRefreshToken(@CookieValue(value = "refresh_token", required = false) String refreshTokenFromCookie) {
-            if (refreshTokenFromCookie.isBlank()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("missing refresh token!");
+        if (refreshTokenFromCookie.isBlank())
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("missing refresh token!");
 
-            String accessToken = refreshTokenService.generateAccessTokenFromRefreshToken(refreshTokenFromCookie);
-            return ResponseEntity.ok(LoginResponse.builder().access_token(accessToken).build());
+        String accessToken = refreshTokenService.generateAccessTokenFromRefreshToken(refreshTokenFromCookie);
+        return ResponseEntity.ok(LoginResponse.builder().access_token(accessToken).build());
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+            @CookieValue(value = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        userService.logout(refreshToken, response);
+
+        return ResponseEntity.ok(
+                Map.of("message", "Logout successfully"));
+
     }
 }
