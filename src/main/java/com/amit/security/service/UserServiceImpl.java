@@ -76,21 +76,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void logout(String refreshJwt, HttpServletResponse response) {
+    public void logout(String refreshJwt) {
         // If refresh token exists → delete session
         if (refreshJwt != null) {
             refreshTokenRepository.findByToken(refreshJwt).ifPresent(refreshTokenRepository::delete);
         }
-
-        // Clear refresh-token cookie
-        ResponseCookie deleteCookie = ResponseCookie.from("refresh_token", "")
-                .httpOnly(true)
-                .secure(false)
-                .path("api/v1/auth")
-                .maxAge(0)
-                .build();
-
-        response.setHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
 
         // Clear Security Context
         SecurityContextHolder.clearContext();

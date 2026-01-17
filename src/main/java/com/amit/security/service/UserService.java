@@ -8,5 +8,5 @@ import jakarta.servlet.http.HttpServletResponse;
 public interface UserService {
     User register(User user);
     LoginResponse verify(LoginRequest loginRequest);
-    void logout(String refreshJwt, HttpServletResponse response);
+    void logout(String refreshJwt);
 }

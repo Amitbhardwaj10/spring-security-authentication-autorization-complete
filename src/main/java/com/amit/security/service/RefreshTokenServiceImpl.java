@@ -1,17 +1,16 @@
 package com.amit.security.service;
 
+import com.amit.security.dto.response.LoginResponse;
 import com.amit.security.entity.RefreshToken;
 import com.amit.security.entity.User;
 import com.amit.security.repository.RefreshTokenRepository;
 import com.amit.security.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Date;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class RefreshTokenServiceImpl implements RefreshTokenService {
@@ -45,8 +44,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         }
     }
 
+    public void issueNewRefreshToken(String refreshToken) {
+
+    }
+
     @Override
-    public String generateAccessTokenFromRefreshToken(String refreshTokenFromCookie) {
+    public LoginResponse generateAccessTokenAndRotateRefreshToken(String refreshTokenFromCookie) {
 
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenFromCookie).orElseThrow(() -> new RuntimeException("Invalid refresh token"));
 
@@ -62,8 +65,31 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             throw new RuntimeException("Invalid refresh token");
         }
 
-        // generate access token
+        // get user
         var user = refreshToken.getUser();
-        return jwtService.generateAccessToken(user);
+
+        // Delete old refresh token from db
+        refreshTokenRepository.delete(refreshToken);
+
+        // Generate new refresh token
+        String newRefreshToken = jwtService.generateRefreshToken(user);
+
+        // save into the database
+        RefreshToken newToken = RefreshToken.builder()
+                .token(newRefreshToken)
+                .user(user)
+                .expiryDate(Instant.now().plus(30, ChronoUnit.DAYS))
+                .build();
+
+        refreshTokenRepository.save(newToken);
+
+        // generate new access token
+       String newAccessToken =  jwtService.generateAccessToken(user);
+
+       // Return both tokens
+        return LoginResponse.builder()
+                .access_token(newAccessToken)
+                .refresh_token(newRefreshToken)
+                .build();
     }
 }
